@@ -1,0 +1,17 @@
+{
+  "name": "BounCoursePlanner",
+  "version": "0.1.0",
+  "description": "BounCoursePlanner Server Side",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "author": "simitii",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "iconv-lite": "^0.4.18",
+    "request": "^2.81.0"
+  }
+}
