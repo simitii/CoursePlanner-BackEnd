@@ -1,3 +1,4 @@
+
 var router = require('express').Router();
 var request = require('request');
 var iconv = require('iconv-lite');
@@ -10,8 +11,10 @@ var encoding = 'iso-8859-9';
 
 // split up route handling
 
+var hiddenDepartments = {};
+
 //=========SEMESTER-DATA======
-router.use('/getLastedSemester',function(req,res){
+var getLastedSemester = function(callback){
 	request('http://registration.boun.edu.tr/schedule.htm', function (error, response, body) {
 		//ENCODING FIX
 		body = iconv.decode(body, encoding);
@@ -19,6 +22,12 @@ router.use('/getLastedSemester',function(req,res){
 		body = body.substr(body.indexOf('option'));
 		body = body.substr(body.indexOf("'")+1);
 		var semester = body.substr(0,body.indexOf("'"));
+		callback(semester);
+	});
+}
+
+router.use('/getLastedSemester',function(req,res){
+	getLastedSemester(function(semester){
 		res.send({
 			semester: semester
 		});
@@ -36,7 +45,7 @@ var deleteSpaces = function(str){
 }
  
 //=========DEPARTMENT-DATA====
-router.use('/getDepartments',function(req,res){
+var getDepartments = function(callback){
 	request.post('http://registration.boun.edu.tr/scripts/schdepsel.asp', function (error, response, body) {
 		//ENCODING FIX
 		body = iconv.decode(body, encoding);
@@ -55,7 +64,22 @@ router.use('/getDepartments',function(req,res){
 			});
 			index = body.indexOf("kisaadi=");
 		}
-		res.send(response);
+		for(var propertyName in hiddenDepartments) {
+			if(hiddenDepartments.hasOwnProperty(propertyName)){
+				var depInfo = hiddenDepartments[propertyName];
+				response.push({
+					short: depInfo.short,
+					long : null
+				});
+			}
+		 }
+		callback(response);
+	});
+};
+
+router.use('/getDepartments',function(req,res){
+	getDepartments(function(departments){
+		res.send(departments);
 	});
 });
 
@@ -69,14 +93,35 @@ var removeSpaces = function(str){
 	return str.replace(" ", "");
 }
 
-router.use('/getCourses',function(req,res){
-	if(req.body.semester === undefined || req.body.short === undefined || 
-			req.body.long === undefined){
-		console.log(req.body.semester,req.body.short,req.body.long);
-		res.sendStatus(400);
+var getDepartmentCode = function(courseCode){
+	var isNumber = function(ch){
+		var charCode = ch.charCodeAt(0);
+		return charCode>=48 && charCode<=57; 
+	}
+	var dep = "";
+	for(var i = 0;i<courseCode.length;i++){
+		var ch = courseCode.charAt(i);
+		if(isNumber(ch) || ch == '.'){
+			return dep; 
+		}
+		dep += ch;
+	}
+}
+
+var getCourses = function(semester,short,long,callback){
+	if(semester === undefined || short === undefined || long === undefined){
 		return;
 	}
-	var url = buildDepartmentURL(req.body.semester,req.body.short,req.body.long);
+	if(hiddenDepartments[short]!==undefined && long==null){
+		var hiddenDep = hiddenDepartments[short];
+		short = hiddenDep.parentShort;
+		long = hiddenDep.parentLong;
+	}
+	if(long == null){
+		console.log("long == null ", short);
+		return;
+	}
+	var url = buildDepartmentURL(semester,short,long);
 	request(url, function (error, response, body) {
 		//ENCODING FIX
 		body = iconv.decode(body, encoding);
@@ -103,8 +148,18 @@ router.use('/getCourses',function(req,res){
 			body = body.substr(body.indexOf("&nbsp;</td>")+11);
 			time += body.substr(body.indexOf("<td>")+4,body.indexOf("&nbsp")).split("&nbsp")[0];
 			body = body.substr(body.indexOf("&nbsp;</td>")+11);
+			var courseCode = deleteSpaces(code);
+			var depCode = getDepartmentCode(courseCode);
+			if(depCode != short && hiddenDepartments[depCode]===undefined){
+				console.log(depCode);
+				hiddenDepartments[depCode] = {
+					short: depCode,
+					parentShort: short,
+					parentLong: long
+				};
+			}
 			response.push({
-				code: deleteSpaces(code),
+				code: courseCode,
 				name: name,
 				credits: credits,
 				ects: ects,
@@ -114,7 +169,41 @@ router.use('/getCourses',function(req,res){
 			body = body.substr(body.indexOf('<tr class="schtd'));
 			index = body.indexOf("font-size:12px'>");
 		}
-		res.send(response);
+		callback(response);
+	});
+};
+
+
+var findHiddenDepartments = function(){
+	console.log("Hidden Department Search Started!");
+	getLastedSemester(function(semester){
+		getDepartments(function(departments){
+			for(let i = 0;i<departments.length;i++){
+				let department = departments[i];
+				setTimeout(function(){
+					console.log(department);
+					getCourses(semester,department.short,department.long,function(){
+						if(i===(departments.length-1)){
+							console.log("Hidden Department Search Completed!");
+						}
+					});
+				},i*5000); //5sn = 5000ms
+			}
+		});
+	});
+};
+
+findHiddenDepartments();
+setInterval(findHiddenDepartments,25920000); // 72hours = 25920000ms
+
+router.use('/getCourses',function(req,res){
+	if(req.body.semester === undefined || req.body.short === undefined || req.body.long === undefined){
+		console.log(req.body.semester,req.body.short,req.body.long);
+		res.sendStatus(400);
+		return;
+	}
+	getCourses(req.body.semester,req.body.short,req.body.long,function(result){
+		res.send(result);
 	});
 });
 
