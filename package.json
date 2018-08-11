@@ -4,7 +4,7 @@
   "description": "BounCoursePlanner Server Side",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js",
+    "start": "NODE_ENV=PRODUCTION node main.js",
     "dev-start": "NODE_ENV=DEV node main.js",
     "debug-start": "NODE_ENV=DEBUG node main.js"
   },

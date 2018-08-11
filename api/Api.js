@@ -19,7 +19,7 @@ var getLastedSemester = function(callback){
 	request.get('http://registration.boun.edu.tr/BUIS/General/schedule.aspx',{jar: true}, function(error, req_res, body){
 		//ENCODING FIX
 		body = iconv.decode(body, encoding);
-		
+
 		form_data['__VIEWSTATE'] = ms_viewstate.extractVs(body);
 		form_data['__EVENTVALIDATION'] = ms_viewstate.extractEv(body);
 		form_data['ctl00$cphMainContent$txtSearch'] = "";
@@ -210,7 +210,7 @@ var findHiddenDepartments = function(){
 	});
 };
 
-if(!process.env.NODE_ENV=="DEBUG" && !process.env.NODE_ENV=="DEV"){
+if(process.env.NODE_ENV=="PRODUCTION"){
 	findHiddenDepartments();
 	setInterval(findHiddenDepartments,25920000); // 72hours = 25920000ms
 }
