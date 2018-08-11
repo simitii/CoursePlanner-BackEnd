@@ -4,7 +4,9 @@
   "description": "BounCoursePlanner Server Side",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js"
+    "start": "node main.js",
+    "dev-start": "NODE_ENV=DEV node main.js",
+    "debug-start": "NODE_ENV=DEBUG node main.js"
   },
   "author": "simitii",
   "license": "MIT",
@@ -12,6 +14,7 @@
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
     "iconv-lite": "^0.4.18",
+    "ms-viewstate": "git+https://github.com/mattcg/ms-viewstate.git",
     "request": "^2.81.0"
   }
 }
