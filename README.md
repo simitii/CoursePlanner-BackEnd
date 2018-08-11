@@ -20,6 +20,8 @@ The web site(www.bouncourseplanner.com) got approximately 6.500 user and 18.000 
 Moreover, I often see **people looking for this solution(course planner with lastest data)** in the social media and our users always share the domain name of the web site. Therefore, we gain new users in the organic way.
 # [Detailed Audience Data](https://github.com/simitii/CoursePlanner-WebSite/blob/master/Audience.pdf)
 
+# Updates
+Updated to adopt the changes (the university registration(data) page has changed)
 
 # Fixed Bugs:
 **Hidden Departments**: Some courses appear with sub-department code. Since our design aims to access information from shortest path, it uses department code to find courses. However, sub-department should be explored in order to access courses with sub-department code. Solution is to explore departments and store sub-department codes in the memory and repeat this process after a while (e.g. every 72 hours).
